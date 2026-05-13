@@ -1,179 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iron Mind Triage</title>
-    <style>
-        :root {
-            --bg-color: #121212;
-            --text-color: #e0e0e0;
-            --accent-stoic: #607d8b;
-            --accent-sergeant: #ff5722;
-        }
-        body {
-            font-family: 'Courier New', Courier, monospace;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            padding: 20px;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-        .container {
-            width: 100%;
-            max-width: 400px;
-            background: #1e1e1e;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
-        }
-        h2 { text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .hidden { display: none; }
-        select, button, input {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            background: #333;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        button { cursor: pointer; font-weight: bold; }
-        button:active { transform: scale(0.98); }
-        .btn-submit { background-color: var(--accent-stoic); }
-        
-        /* Stroop Puzzle Styles */
-        #word-display { font-size: 48px; font-weight: bold; text-align: center; margin: 20px 0; }
-        .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .color-btn { padding: 20px; font-size: 18px; }
-    </style>
-</head>
+<html>
+<head><title>Iron Mind Logic Engine</title></head>
 <body>
-
-<div id="triage-view" class="container">
-    <h2>SYSTEM OVERRIDE</h2>
-    <label>Assess Urge Severity (1-10):</label>
-    <input type="range" id="severity" min="1" max="10" value="5" oninput="document.getElementById('sev-val').innerText = this.value">
-    <div style="text-align:center; font-weight:bold; margin-bottom:15px;" id="sev-val">5</div>
-
-    <label>Identify the Target Parameter:</label>
-    <select id="trigger-c">
-        <option value="Compulsion">Compulsion (Sudden overwhelming urge)</option>
-        <option value="Control">Control (Fear of not stopping)</option>
-        <option value="Consequences">Consequences (Ignoring negative effects)</option>
-        <option value="Craving">Craving (Persistent background desire)</option>
-    </select>
-
-    <label>Select Protocol:</label>
-    <select id="persona">
-        <option value="stoic">The Stoic (Logic & Observation)</option>
-        <option value="sergeant">The Sergeant (Action & Discipline)</option>
-    </select>
-
-    <button class="btn-submit" onclick="executeTriage()">INITIATE PROTOCOL</button>
-</div>
-
-<div id="severe-view" class="container hidden">
-    <h2 id="severe-header">NEURAL DISRUPTION ACTIVE</h2>
-    <p style="text-align:center; font-size:14px;">Select the COLOR of the ink, not the word. You must score 10 rapid successes to unlock the system.</p>
-    <div id="score-display" style="text-align:center; font-size:24px; color:#ffeb3b;">Score: 0 / 10</div>
-    <div id="word-display">RED</div>
-    <div class="color-grid">
-        <button class="color-btn" style="background:red;" onclick="checkStroop('red')">RED</button>
-        <button class="color-btn" style="background:blue;" onclick="checkStroop('blue')">BLUE</button>
-        <button class="color-btn" style="background:green;" onclick="checkStroop('green')">GREEN</button>
-        <button class="color-btn" style="background:yellow; color:#000;" onclick="checkStroop('yellow')">YELLOW</button>
-    </div>
-</div>
-
-<div id="medium-view" class="container hidden">
-    <h2 id="medium-header">SYSTEM ANALYSIS</h2>
-    <p id="medium-text"></p>
-    <button class="btn-submit" onclick="resetApp()">Acknowledge & Close</button>
-</div>
-
-<div id="low-view" class="container hidden">
-    <h2 id="low-header">ROUTINE LOG</h2>
-    <p id="low-text"></p>
-    <textarea rows="4" placeholder="Log one specific 'Pride Win' from today..." style="width:100%; background:#333; color:#fff; border:none; padding:10px;"></textarea>
-    <button class="btn-submit" onclick="resetApp()">Save to Local Storage</button>
-</div>
-
 <script>
-    // --- Routing Logic ---
-    function executeTriage() {
-        const severity = parseInt(document.getElementById('severity').value);
-        const persona = document.getElementById('persona').value;
-        const triggerC = document.getElementById('trigger-c').value;
+window['ai_edge_gallery_get_result'] = async (dataStr) => {
+    try {
+        // Parse the dynamic data sent by the LLM
+        const params = JSON.parse(dataStr);
+        const severityScore = params.severity || 5; // Default to 5 if missing
 
-        document.getElementById('triage-view').classList.add('hidden');
-
-        // Apply Persona Styling
-        const themeColor = persona === 'stoic' ? 'var(--accent-stoic)' : 'var(--accent-sergeant)';
-        document.querySelectorAll('.btn-submit').forEach(btn => btn.style.backgroundColor = themeColor);
-
-        if (severity >= 8) {
-            document.getElementById('severe-view').classList.remove('hidden');
-            document.getElementById('severe-header').innerText = persona === 'stoic' ? "EXECUTIVE FUNCTION OVERRIDE" : "TACTICAL NEURAL DISRUPTION";
-            generateStroop();
-        } else if (severity >= 4) {
-            document.getElementById('medium-view').classList.remove('hidden');
-            let educationText = persona === 'stoic' ? 
-                `Observation: You are experiencing a ${triggerC}. This is not a failure of will; it is a biological feedback loop. Your brain is releasing DeltaFosB, a protein attempting to physically link environmental cues to a false pleasure response. By withholding the stimulus now, you are literally unwiring this connection.` : 
-                `Alert: ${triggerC} detected. Your midbrain is flooding your system with DeltaFosB to force compliance. Do not surrender the high ground. Every minute you hold the line, those neural pathways weaken. Stand firm.`;
-            document.getElementById('medium-text').innerText = educationText;
-        } else {
-            document.getElementById('low-view').classList.remove('hidden');
-            let logText = persona === 'stoic' ? 
-                "The foundation is built in the quiet moments. Record an action today that aligned with your rational intent." : 
-                "Mission maintenance. Secure today's perimeter by logging a confirmed Pride Win.";
-            document.getElementById('low-text').innerText = logText;
-        }
-    }
-
-    function resetApp() {
-        document.querySelectorAll('.container').forEach(el => el.classList.add('hidden'));
-        document.getElementById('triage-view').classList.remove('hidden');
-    }
-
-    // --- Stroop Puzzle Logic (High-Speed Pattern Recognition) ---
-    const colors = ['red', 'blue', 'green', 'yellow'];
-    let currentInkColor = '';
-    let score = 0;
-
-    function generateStroop() {
-        const wordText = colors[Math.floor(Math.random() * colors.length)];
-        currentInkColor = colors[Math.floor(Math.random() * colors.length)];
-        
-        const display = document.getElementById('word-display');
-        display.innerText = wordText.toUpperCase();
-        display.style.color = currentInkColor;
-    }
-
-    function checkStroop(selectedColor) {
-        if (selectedColor === currentInkColor) {
-            score++;
-            document.getElementById('score-display').innerText = `Score: ${score} / 10`;
-            if (score >= 10) {
-                alert("Executive function restored. Protocol complete.");
-                score = 0;
-                resetApp();
-            } else {
-                generateStroop();
+        return JSON.stringify({
+            result: "Triage protocol loaded. Engage with the interface to restore executive function.",
+            webview: {
+                // Pass the severity to the UI via URL parameter
+                url: `webview.html?severity=${severityScore}`, 
+                aspectRatio: 1.5 
             }
-        } else {
-            score = Math.max(0, score - 1); // Penalize mistakes to force focus
-            document.getElementById('score-display').innerText = `Score: ${score} / 10`;
-            document.getElementById('word-display').innerText = "ERROR - REFOCUS";
-            document.getElementById('word-display').style.color = "#fff";
-            setTimeout(generateStroop, 500);
-        }
+        });
+    } catch (e) {
+        return JSON.stringify({ error: e.message });
     }
+};
 </script>
 </body>
 </html>
